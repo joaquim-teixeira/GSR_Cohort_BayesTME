@@ -53,9 +53,9 @@ analysis_slice=function (f_coords, f_btme, f_lda)
   lda$gene_probs=lda$components_/rowSums(lda$components_)
   #match=match_clusters(cds, apply  (t(btme$cell_num_trace)[,-1],1,which.max), apply  (t(lda$transform),1,which.max))
   probs_lda=data.frame (cds, t(lda$transform))
-  names (probs_lda)=c('x','y',paste ('cluster_',1:6,sep=''))
+  names (probs_lda)=c('x','y',paste ('type_',1:6,sep=''))
   probs_btme=data.frame (cds, t(btme$cell_prob_trace[-1,]))
-  names (probs_btme)=c('x','y',paste ('cluster_',1:6,sep=''))
+  names (probs_btme)=c('x','y',paste ('type_',1:6,sep=''))
   probs_lda=pivot_longer(probs_lda,cols=starts_with('cluster'))
   probs_btme=pivot_longer(probs_btme,cols=starts_with('cluster'))
   probs_lda$type='LDA'
@@ -84,21 +84,21 @@ analysis_lda_patient=function (f_coords, f_btme, f_lda_slice,f_lda_patient, f_cl
   btme=get_nc_list(f_btme)
   lda$gene_probs=lda$components_/rowSums(lda$components_)
   probs_lda=data.frame (cds, t(lda$transform))
-  names (probs_lda)=c('x','y',paste ('cluster_',1:6,sep=''))
+  names (probs_lda)=c('x','y',paste ('type_',1:6,sep=''))
   probs_btme=data.frame (cds, t(btme$cell_prob_trace[-1,]))
-  names (probs_btme)=c('x','y',paste ('cluster_',1:6,sep=''))
-  probs_lda=pivot_longer(probs_lda,cols=starts_with('cluster'))
-  probs_btme=pivot_longer(probs_btme,cols=starts_with('cluster'))
+  names (probs_btme)=c('x','y',paste ('type_',1:6,sep=''))
+  probs_lda=pivot_longer(probs_lda,cols=starts_with('type'))
+  probs_btme=pivot_longer(probs_btme,cols=starts_with('type'))
   probs_lda$type='2-LDA_slice'
   probs_btme$type='1-BayesTME'
   hcldf=read.table (f_clust)
-  probs_hclust=data.frame (x=hcldf$x,y=hcldf$y, name=paste ('cluster_',hcldf$label+1,sep=''))  
+  probs_hclust=data.frame (x=hcldf$x,y=hcldf$y, name=paste ('type_',hcldf$label+1,sep=''))  
   probs_hclust$value=1
   probs_hclust$type='4-Hierarchical'
   lda_pat=get_nc_list(f_lda_patient)
   probs_lda_patient=data.frame (cds, t(lda_pat$transform)[(indvals[1]:indvals[2]),])
-  names (probs_lda_patient)=c('x','y',paste ('cluster_',1:6,sep=''))
-  probs_lda_patient=pivot_longer(probs_lda_patient,cols=starts_with('cluster'))
+  names (probs_lda_patient)=c('x','y',paste ('type_',1:6,sep=''))
+  probs_lda_patient=pivot_longer(probs_lda_patient,cols=starts_with('type'))
   probs_lda_patient$type='3-LDA_patient'
   probs=rbind (probs_lda, probs_btme,probs_hclust,probs_lda_patient)
   
@@ -135,13 +135,13 @@ patients=substr(flc,81,81)
 
 ```
 
-We look at a comparison between a few ST analyses on the HER2-positive breast tumors provided in Andersson et al. (2021). The data consists of 7 patients each with 3-6 slices. So far, this analysis is only on patient 'A'. The following analyses were performed:
+We looked at a comparison between a few ST analyses on the HER2-positive breast tumors provided in Andersson et al. (2021). The data consists of 7 patients each with 3-6 slices. So far, this analysis is only on patient 'A'. The following analyses were performed:
 
 1. BayesTME applied on each slice. We enforce 6 cell types and lambda of 10000. We sample 1000 times, with 2000 burn in steps and a thinning of 5. 
 
-2. Latent Direchlet Allocation applied (LDA) on each slice, based on sklearn.decomposition.LatentDirichletAllocation. We enforce 6 cell types.
+2. Latent Direchlet Allocation (LDA) applied  on each slice, based on sklearn.decomposition.LatentDirichletAllocation. We enforce 6 cell types.
 
-3. Latent Direchlet Allocation applied on each patient. We enforce 6 cell types.
+3. LDA applied on each patient across all slices. Again, we enforce 6 cell types.
 
 4. The baseline analysis performed by Andersson et al. (2021). Nearest neighbors/hierarchical clustering  is performed on gene expression at the patient+cohort level. This was used to set the number of cell types in each slice. 
 
