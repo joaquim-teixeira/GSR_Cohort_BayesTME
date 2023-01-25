@@ -76,7 +76,7 @@ analysis_slice=function (f_coords, f_btme, f_lda)
   return (list(g1,g2,lda,btme))
 }
 
-analysis_lda_patient=function (f_coords, f_btme, f_lda_slice,f_lda_patient, f_clust,indvals)
+analysis_lda_patient=function (f_coords, f_btme,f_btme_2, f_lda_slice,f_lda_patient, f_clust,indvals)
 {
   dat=read.table(f_coords)
   cds=get_coords_cdata(dat[1,-1])
@@ -89,18 +89,25 @@ analysis_lda_patient=function (f_coords, f_btme, f_lda_slice,f_lda_patient, f_cl
   names (probs_btme)=c('x','y',paste ('cluster_',1:6,sep=''))
   probs_lda=pivot_longer(probs_lda,cols=starts_with('cluster'))
   probs_btme=pivot_longer(probs_btme,cols=starts_with('cluster'))
-  probs_lda$type='2-LDA_slice'
-  probs_btme$type='1-BayesTME'
+  probs_lda$type='3-LDA_slice'
+  probs_btme$type='1-BayesTME_1e4'
+  btme_2=get_nc_list(f_btme_2)
+  probs_btme_2=data.frame (cds, t(btme_2$cell_prob_trace[-1,]))
+  names (probs_btme_2)=c('x','y',paste ('cluster_',1:6,sep=''))
+
+  probs_btme_2=pivot_longer(probs_btme_2,cols=starts_with('cluster'))
+  probs_btme_2$type='2-BayesTME_1e6'
+
   hcldf=read.table (f_clust)
   probs_hclust=data.frame (x=hcldf$x,y=hcldf$y, name=paste ('cluster_',hcldf$label+1,sep=''))  
   probs_hclust$value=1
-  probs_hclust$type='4-Hierarchical'
+  probs_hclust$type='5-Hierarchical'
   lda_pat=get_nc_list(f_lda_patient)
   probs_lda_patient=data.frame (cds, t(lda_pat$transform)[(indvals[1]:indvals[2]),])
   names (probs_lda_patient)=c('x','y',paste ('cluster_',1:6,sep=''))
   probs_lda_patient=pivot_longer(probs_lda_patient,cols=starts_with('cluster'))
-  probs_lda_patient$type='3-LDA_patient'
-  probs=rbind (probs_lda, probs_btme,probs_hclust,probs_lda_patient)
+  probs_lda_patient$type='4-LDA_patient'
+  probs=rbind (probs_lda, probs_btme,probs_btme_2,probs_hclust,probs_lda_patient)
   
   
   g1= ggplot (probs, aes (x,y, fill=value))+geom_tile(color='black')+theme_bw()+facet_grid(name~type)+scale_fill_gradientn(colors=jet.colors (11),breaks =seq(0,1,length.out=11))+labs (x='',y='',fill='Spot Probability by\n Cell Type')  
@@ -123,7 +130,8 @@ analysis_lda_patient=function (f_coords, f_btme, f_lda_slice,f_lda_patient, f_cl
 
 ```{r files, include=FALSE}
 flc=list.files ('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/flipped_cohort_data',full.names = T)
-flb=list.files('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/deconvolution_results_1000_sims',full.names = T)
+flb=list.files('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/deconvolution_results_1000_sims',full.names = T)[1:6]
+flb_2=list.files('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/deconvolution_results_1000_sims_lambda_10e5/',full.names = T)[1:6]
 fll=list.files('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/ldas_by_slice',full.names = T)
 fllp=list.files('/Users/joaquimteixeira/GSR_22_Tansey_Banerjee/teixeira_code/ldas_by_patient',full.names = T)
 fllp=c(rep(fllp[1],6),rep(fllp[2],6),rep(fllp[3],6),rep(fllp[4],6),rep(fllp[5],3),rep(fllp[6],3),rep(fllp[7],3))
@@ -152,7 +160,7 @@ vals=list()
 
 for (i in 1:6)
 {
-  vals[[i]]=analysis_lda_patient(flc[i],flb[i],fll[i],fllp[i],flh[i],inds[i,])
+  vals[[i]]=analysis_lda_patient(flc[i],flb[i],flb_2[i],fll[i],fllp[i],flh[i],inds[i,])
 }
 ```
 
